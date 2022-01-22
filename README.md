@@ -1,0 +1,2 @@
+# drv_dht22_armlinux
+ARM-Linux环境下用于DHT22传感器的设备驱动程序
