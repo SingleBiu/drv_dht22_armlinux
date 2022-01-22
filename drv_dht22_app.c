@@ -2,8 +2,8 @@
  * @Author: SingleBiu
  * @Date: 2022-01-19 20:36:20
  * @LastEditors: SingleBiu
- * @LastEditTime: 2022-01-21 16:58:53
- * @Description: file content
+ * @LastEditTime: 2022-01-22 10:54:11
+ * @Description: A dht22 driver demo application
  */
 #include <stdio.h>
 #include <stdlib.h>

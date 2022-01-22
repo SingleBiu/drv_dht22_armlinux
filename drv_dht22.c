@@ -2,7 +2,7 @@
  * @Author: SingleBiu
  * @Date: 2022-01-21 14:19:30
  * @LastEditors: SingleBiu
- * @LastEditTime: 2022-01-21 16:52:30
+ * @LastEditTime: 2022-01-22 11:02:05
  * @Description: DHT22 driver
  */
 #include <linux/init.h>
@@ -18,7 +18,7 @@
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/time.h>
-#include "cfg_type.h"
+#include "cfg_type.h"   //GPIO定义 非Liunx系统文件
 
 //定义一个字符设备
 static struct cdev dht22_cdev;
@@ -55,8 +55,7 @@ static unsigned char get_byte(void)
     for (j = 0; j < 8; j++)
     {
         i = 0;
-        // 等待总线拉高跳出
-        while (!gpio_get_value(DHT_DATA))
+        while (!gpio_get_value(DHT_DATA))   // 等待总线拉高跳出
         {
             i++;
             udelay(1);
@@ -68,19 +67,16 @@ static unsigned char get_byte(void)
         }
 
         udelay(22);
-
-        //将数据移到最高位
-        ret <<= 1;
+        
+        ret <<= 1;          //将数据移到最高位
         if (gpio_get_value(DHT_DATA))
         {
-            // 接收最高位放在第一位
-            ret |= 0x01;
+            ret |= 0x01;    // 接收最高位放在第一位
         }
 
         i = 0;
-
-        // 等待总线拉低跳出
-        while (gpio_get_value(DHT_DATA))
+   
+        while (gpio_get_value(DHT_DATA))     // 等待总线拉低跳出
         {
             i++;
             udelay(1);
@@ -104,6 +100,7 @@ static long gec6818_dht22_ioctl(struct file *filp, unsigned int cmd, unsigned lo
 
     int hum = 0;    //湿度
     int temp = 0;   //温度
+
     int temp_h = 0; //温度高位
     int temp_l = 0; //温度低位
 
@@ -130,7 +127,7 @@ static long gec6818_dht22_ioctl(struct file *filp, unsigned int cmd, unsigned lo
 
         ret = gpio_direction_input(DHT_DATA); // 设置输入
 
-        if (gpio_get_value(DHT_DATA)) //如果响应会拉低总线
+        if (gpio_get_value(DHT_DATA))    //如果响应会拉低总线
         {
             printk("DHT22 low level timeout error\n");
             local_irq_restore(flags);
@@ -182,16 +179,19 @@ static long gec6818_dht22_ioctl(struct file *filp, unsigned int cmd, unsigned lo
     else
         return -EINVAL; //无效命令
 
-    hum = (dht22_data[0] * 256 + dht22_data[1]) / 10;
-    temp = (dht22_data[2] * 256 + dht22_data[3]) / 10;
+    hum = (dht22_data[0] * 256 + dht22_data[1]) / 10;    //湿度
+    temp = (dht22_data[2] * 256 + dht22_data[3]) / 10;   //温度
+
+    //高精度
     temp_h = (dht22_data[2] * 256 + dht22_data[3]) / 10; //温度高位 小数点以前
     temp_l = (dht22_data[2] * 256 + dht22_data[3]) % 10; //温度地位 小数点之后
 
+    // DEBUG INFO
     printk("kdata: u8  th_data = %d %d  temp_data = %d %d\n", dht22_data[0], dht22_data[1], dht22_data[2], dht22_data[3]);
     printk("kdata:temp_h : %d temp_l : %d\n", temp_h, temp_l);
     printk("kdata:int th_data = %d  temp_data = %d\n", hum, temp);
 
-    ret = copy_to_user(((int *)arg), &hum, sizeof(hum)); //拷贝湿度
+    ret = copy_to_user(((int *)arg), &hum, sizeof(hum));             //拷贝湿度
     if (ret != 0)
         return -EFAULT;
     ret = copy_to_user(((int *)arg) + 1, &temp_h, (sizeof(temp_h))); //拷贝温度
@@ -219,8 +219,8 @@ static const struct file_operations gec6818_dht22_fops =
 static int __init gec6818_dht22_init(void)
 {
     int ret;
-    //获取设备号
-    if (devno_major == 0)
+  
+    if (devno_major == 0)  //获取设备号
     {
         ret = alloc_chrdev_region(&dht22_dev_num, devno_minor, 1, "dht22_device");
     }
@@ -235,19 +235,16 @@ static int __init gec6818_dht22_init(void)
         return ret;
     }
 
-    //初始化cdev
-    cdev_init(&dht22_cdev,&gec6818_dht22_fops);
+    cdev_init(&dht22_cdev,&gec6818_dht22_fops); //初始化cdev
 
-    //将初始化好的cdev加入内核
-    ret = cdev_add(&dht22_cdev, dht22_dev_num, 1);
+    ret = cdev_add(&dht22_cdev, dht22_dev_num, 1); //将初始化好的cdev加入内核
     if (ret < 0)
     {
         printk("cdev add error\n");
         goto cdev_add_err;
     }
-
-    //创建class
-    dht22_class = class_create(THIS_MODULE, "DHT22_class");
+   
+    dht22_class = class_create(THIS_MODULE, "DHT22_class"); //创建class
     if (IS_ERR(dht22_class))
     {
         ret = PTR_ERR(dht22_class);
@@ -276,7 +273,7 @@ static int __init gec6818_dht22_init(void)
         goto device_create_err;
     }
 
-    printk("gec6818_dht22_init\n");
+    printk(KERN_INFO "gec6818_dht22_init\n");
     return 0;
 
     //错误处理

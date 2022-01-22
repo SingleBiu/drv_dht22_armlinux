@@ -1,6 +1,4 @@
-
-#KERNELRELEASE这个变量，在内核源码的根目录下面的Makefile会初初始化的
-
+#KERNELRELEASE这个变量，在内核源码的根目录下面的Makefile会初始化
 ifeq ($(KERNELRELEASE),)
 
 KERN_DIR := /home/china/6818GEC/kernel
